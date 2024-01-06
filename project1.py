@@ -1,7 +1,7 @@
 import sqlite3
 import sys
 
-from PyQt6.QtWidgets import QTableWidget,QTableWidgetItem, QApplication, QWidget, QLabel, QLineEdit, QVBoxLayout, QPushButton, QMessageBox # * means all module
+from PyQt6.QtWidgets import QTableWidget,QTableWidgetItem, QApplication, QWidget, QLabel, QLineEdit, QVBoxLayout,QHBoxLayout, QPushButton, QMessageBox # * means all module
 
 #         ceo = ClassName()
 #         ceo = module.ClassName()
@@ -22,6 +22,9 @@ conn.commit()
 app = QApplication([])# [] is a list in python
 
 # Create widgets
+rowid = QLineEdit()
+rowid.setHidden(True) 
+
 name_label = QLabel('Name:')
 name = QLineEdit()
 
@@ -37,6 +40,7 @@ view_button = QPushButton('View')
 
 showemployees = QPushButton('Show Employees')
 # x=10 Global Variable
+#ceo = ClassName()
 table = QTableWidget()
 def deleteEmployee(row):
     # Create a confirmation QMessageBox
@@ -53,8 +57,45 @@ def deleteEmployee(row):
     if result == QMessageBox.StandardButton.Yes:
         print("User clicked Yes, proceed with the action.")
         # Add your action here
+        print(row)
+        print(table.item(row,0).text())
+        delid = table.item(row,0).text()
+        print("Before Typecasting")
+        print(delid)
+        print(type(delid))
+        #typecasting
+        delid = int(delid)
+        print("After Typecasting")
+        print(delid)
+        print(type(delid))
+        
+        print(f"DELETE FROM employees WHERE id={delid}")
+        #1. Build the query
+        query = f"DELETE FROM employees WHERE id={delid}"
+        #2. Execute the query
+        cursor.execute(query)
+        #3. Commit the query
+        conn.commit()
+        table.removeRow(row)
+        
     else:
-        print("User clicked No, cancel the action.")    
+        print("User clicked No, cancel the action.")
+#global Variablw
+def editEmployee(row):
+    print(row)
+    print(table.item(row,0).text())
+    print(table.item(row,1).text())
+    print(table.item(row,2).text())
+    print(table.item(row,3).text())
+    submit_button.setText('Update')
+    rowid.setText(table.item(row,0).text())
+    name.setText(table.item(row,1).text())
+    position.setText(table.item(row,2).text())
+    salary.setText(table.item(row,3).text())
+    print(rowid.text())
+    
+    
+    pass           
 def showEmployeesSlotFunction():
     # We can use global variable inside function defination
     print("Hello")
@@ -72,30 +113,39 @@ def showEmployeesSlotFunction():
     print(enumerate(data))
     # Populate the table with data
     for row_num, row_data in enumerate(data):
+        delid=''
         for col_num, col_data in enumerate(row_data):
             item = QTableWidgetItem(str(col_data))
             table.setItem(row_num, col_num, item)
+        print()
         # Add buttons for each row
         #view_button = QPushButton('View')
-        #edit_button = QPushButton('Edit')
+        edit_button = QPushButton('Edit')
         delete_button = QPushButton('Delete')
         
-        button_layout = QVBoxLayout()
+        button_layout = QHBoxLayout()
         #button_layout.addWidget(view_button)
-        #button_layout.addWidget(edit_button)
+        button_layout.addWidget(edit_button)
         button_layout.addWidget(delete_button)
         button_layout.setContentsMargins(0, 0, 0, 0)  # No margins
 
         buttons_widget = QWidget()
         buttons_widget.setLayout(button_layout)
         table.setCellWidget(row_num,len(column_names) - 1,buttons_widget)
-        delete_button.clicked.connect(lambda _, row=row_num: deleteEmployee(row))
+        edit_button.clicked.connect(lambda _,row=row_num: editEmployee(row))#function(aa1,aa2,aa3)
+        delete_button.clicked.connect(lambda _,row=row_num: deleteEmployee(row))#function(aa1,aa2,aa3)
     
     table.show()
     pass
 
 #1. Function defination
-def myFunction(): # myFunction is writter in camelCase
+def showMsg(msg):
+    msgBox = QMessageBox()
+    msgBox.setText(msg)
+    msgBox.exec()
+    showEmployeesSlotFunction()
+def submit():
+    #print('Submit')
     print("Hi Hello")
     print(f"name={name.text()} position={position.text()} salary={salary.text()}  ")
     #query = "DELETE FROM employees;"
@@ -109,10 +159,46 @@ def myFunction(): # myFunction is writter in camelCase
     cursor.execute(query, (name.text(), position.text(), salary.text()))
     conn.commit()
     
-    msgBox = QMessageBox()
-    msgBox.setText("Employee Saved Successfully")
-    msgBox.exec()
+    showMsg("Employee Saved Successfully")
     pass
+def update(row):
+    #print("Row >>>>"+row
+    print("Update")
+    """
+    UPDATE table_name
+    SET column1 = value1, column2 = value2, ...
+    WHERE condition;
+    """
+    #1. Build the query
+    #TypeCasting
+    #row = int(row)
+    n = name.text()
+    p = position.text()
+    s = salary.text()
+    print(n)
+    #p = table.item(row,2).text()
+    #s = table.item(row,3).text()
+    query = f"UPDATE employees SET name='{n}',position='{p}',salary={s} WHERE id={rowid.text()}"
+    print(query)
+    #2. Execute the query
+    cursor.execute(query)
+    #3. Commit the query
+    conn.commit()
+    showMsg("Employee Updated Successfully")
+    # DRY Dont Repeate Yourself
+    
+    pass
+def myFunction(): # myFunction is writter in camelCase
+    # get the rowid
+    #
+    if submit_button.text() =='Submit':
+        submit()
+    else:
+        #print("Rowid >>>>>>>>>>>>"+rowid.text())
+        #r=rowid.text()
+        #print(r)
+        update(20)
+        
 
 showemployees.clicked.connect(showEmployeesSlotFunction)
 
@@ -150,6 +236,8 @@ window.resizeEvent = lambda event: resizeTable(event)
 
 # Show the window
 window.show()
+# I am calling the function 3rd time
+showEmployeesSlotFunction()
 sys.exit(app.exec())
 
 
